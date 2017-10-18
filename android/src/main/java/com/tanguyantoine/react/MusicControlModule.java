@@ -206,6 +206,7 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
         nb.setContentText(artist);
         nb.setContentInfo(album);
         nb.setColor(notificationColor);
+        nb.setStyle(new NotificationCompat.MediaStyle().setShowActionsInCompactView(0,1,2));
         
         notification.setCustomNotificationIcon(notificationIcon);
 
