@@ -13,6 +13,7 @@ import android.widget.RemoteViews;
 import android.app.Notification;
 import android.view.View;
 import android.os.Build;
+import android.graphics.Bitmap;
 
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableMap;
@@ -23,7 +24,8 @@ public class MusicControlNotification {
     
     public static final int VISIBILITY_WHEN_PLAYING = 0;
     public static final int VISIBILITY_ALWAYS = 1;
-
+    public static Bitmap cover = null;
+    
     protected static final String REMOVE_NOTIFICATION = "music_control_remove_notification";
     protected static final String MEDIA_BUTTON = "music_control_media_button";
     protected static final String PACKAGE_NAME = "music_control_package_name";
@@ -93,12 +95,20 @@ public class MusicControlNotification {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.notification);
         RemoteViews expanded = new RemoteViews(context.getPackageName(), R.layout.notification_expanded);
 
+        if (cover == null) {
+            views.setImageViewResource(R.id.cover, R.drawable.fallback_cover);
+            expanded.setImageViewResource(R.id.cover, R.drawable.fallback_cover_large);
+        } else {
+            views.setImageViewBitmap(R.id.cover, cover);
+            expanded.setImageViewBitmap(R.id.cover, cover);
+        }
+
         int playButton = ThemeHelper.getPlayButtonResource(playing);
 
         views.setImageViewResource(R.id.play_pause, playButton);
         expanded.setImageViewResource(R.id.play_pause, playButton);
 
-        int closeButtonVisibility = (mode == VISIBILITY_WHEN_PLAYING) ? View.VISIBLE : View.INVISIBLE;
+        int closeButtonVisibility = View.VISIBLE;
         views.setViewVisibility(R.id.close, closeButtonVisibility);
         expanded.setViewVisibility(R.id.close, closeButtonVisibility);
 
@@ -168,8 +178,6 @@ public class MusicControlNotification {
         builder.setDeleteIntent(PendingIntent.getBroadcast(context, 0, remove, PendingIntent.FLAG_UPDATE_CURRENT));
 
         // Finally show/update the notification
-        NotificationManagerCompat.from(context).notify("MusicControl", 0, builder.build());
-
         mNotificationHelper.notify(NOTIFICATION_ID, createNotification(1, VISIBILITY_WHEN_PLAYING));
     }
 

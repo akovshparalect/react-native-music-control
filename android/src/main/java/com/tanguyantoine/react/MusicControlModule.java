@@ -238,6 +238,8 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
                         notification.show(nb, isPlaying);
                     }
                     
+                    MusicControlNotification.cover = bitmap;
+                    
                     artworkThread = null;
                 }
             });
