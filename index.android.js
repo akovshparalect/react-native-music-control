@@ -29,6 +29,9 @@ var MusicControl = {
   enableBackgroundMode: function(enable){
     NativeMusicControl.enableBackgroundMode(enable)
   },
+  setCustomText: function(text){
+    NativeMusicControl.setCustomText(text)
+  },
   setNowPlaying: function(info){
     // Check if we have an android asset from react style image require
     if(info.artwork) {

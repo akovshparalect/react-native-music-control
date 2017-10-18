@@ -78,6 +78,13 @@ export default class MusicControl {
     static enableBackgroundMode(enable: boolean): void
 
     /**
+     * Set the custom text located above notification title and artist 
+     * which is "Music Control" by default
+     * @param text 
+     */
+    static setCustomText(text: string): void
+    
+    /**
      * Set now playing
      * @param info 
      */

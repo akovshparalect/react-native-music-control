@@ -66,6 +66,11 @@ public class MusicControlNotification {
         mExpandedLayout = new RemoteViews(context.getPackageName(), R.layout.notification_expanded);
     }
 
+    public void setCustomTextViewText(String text) {
+        mNormalLayout.setTextViewText(R.id.customText, text);        
+        mExpandedLayout.setTextViewText(R.id.customText, text);        
+    }
+
     public synchronized void setCover(Bitmap cover) {
         mCover = cover;
         mNormalLayout.setImageViewBitmap(R.id.cover, mCover);

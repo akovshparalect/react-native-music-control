@@ -54,6 +54,8 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
     private boolean isPlaying = false;
     private long controls = 0;
     protected int ratingType = RatingCompat.RATING_PERCENTAGE;
+
+    private String mCustomTextViewText = null;
     
     public NotificationClose notificationClose = NotificationClose.PAUSED;
 
@@ -114,7 +116,9 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
 
         notification = new MusicControlNotification(this, context);
         notification.updateActions(controls, null);
-
+        if(mCustomTextViewText != null)
+            notification.setCustomTextViewText(mCustomTextViewText);
+        
         IntentFilter filter = new IntentFilter();
         filter.addAction(MusicControlNotification.REMOVE_NOTIFICATION);
         filter.addAction(MusicControlNotification.MEDIA_BUTTON);
@@ -159,6 +163,11 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
     @ReactMethod
     public void enableBackgroundMode(boolean enable) {
         // Nothing?
+    }
+
+    @ReactMethod
+    public void setCustomText(String text) {
+        mCustomTextViewText = text;
     }
 
     @ReactMethod

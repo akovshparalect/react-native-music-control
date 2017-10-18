@@ -86,6 +86,9 @@ RCT_EXPORT_METHOD(updatePlayback:(NSDictionary *) originalDetails)
 
 }
 
+RCT_EXPORT_METHOD(setCustomText:(NSString*) text) {
+    // to be implemented
+}
 
 RCT_EXPORT_METHOD(setNowPlaying:(NSDictionary *) details)
 {
