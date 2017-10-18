@@ -14,6 +14,7 @@ import android.app.Notification;
 import android.view.View;
 import android.os.Build;
 import android.graphics.Bitmap;
+import android.support.v4.media.MediaMetadataCompat;
 
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableMap;
@@ -41,7 +42,14 @@ public class MusicControlNotification {
     private NotificationCompat.Action play, pause, stop, next, previous, skipForward, skipBackward;
     private boolean mNotificationNag = false; // todo
     private NotificationHelper mNotificationHelper;
-    
+    private Bitmap mCover = null;
+    private Intent mOpenAppIntent;
+    private Intent mRemoveNotifIntent;
+    private RemoteViews mNormalLayout;
+    private RemoteViews mExpandedLayout;
+    private Notification notification = null;
+    private MediaMetadataCompat mMediaData;
+
     public MusicControlNotification(MusicControlModule module, ReactApplicationContext context) {
         this.context = context;
         this.module = module;
@@ -54,6 +62,15 @@ public class MusicControlNotification {
         if(smallIcon == 0) smallIcon = r.getIdentifier("play", "drawable", packageName);
 
         mNotificationHelper = new NotificationHelper(context, NOTIFICATION_CHANNEL, "Podcast App");  // todo
+        mNormalLayout = new RemoteViews(context.getPackageName(), R.layout.notification);
+        mExpandedLayout = new RemoteViews(context.getPackageName(), R.layout.notification_expanded);
+    }
+
+    public synchronized void setCover(Bitmap cover) {
+        mCover = cover;
+        mNormalLayout.setImageViewBitmap(R.id.cover, mCover);
+        mExpandedLayout.setImageViewBitmap(R.id.cover, mCover);        
+        mNotificationHelper.notify(NOTIFICATION_ID, notification);        
     }
     
     public synchronized void setCustomNotificationIcon(String resourceName) {
@@ -88,44 +105,71 @@ public class MusicControlNotification {
         }
     }
 
-    public Notification createNotification(int state, int mode)
+    public Notification createNotification(boolean isPlaying, int mode)
     {
-        boolean playing = true;
-
-        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.notification);
-        RemoteViews expanded = new RemoteViews(context.getPackageName(), R.layout.notification_expanded);
-
-        if (cover == null) {
-            views.setImageViewResource(R.id.cover, R.drawable.fallback_cover);
-            expanded.setImageViewResource(R.id.cover, R.drawable.fallback_cover_large);
+        if (mCover == null) {
+            mNormalLayout.setImageViewResource(R.id.cover, R.drawable.fallback_cover);
+            mExpandedLayout.setImageViewResource(R.id.cover, R.drawable.fallback_cover_large);
         } else {
-            views.setImageViewBitmap(R.id.cover, cover);
-            expanded.setImageViewBitmap(R.id.cover, cover);
+            mNormalLayout.setImageViewBitmap(R.id.cover, mCover);
+            mExpandedLayout.setImageViewBitmap(R.id.cover, mCover);
         }
 
-        int playButton = ThemeHelper.getPlayButtonResource(playing);
+        int playButton = ThemeHelper.getPlayButtonResource(isPlaying);
 
-        views.setImageViewResource(R.id.play_pause, playButton);
-        expanded.setImageViewResource(R.id.play_pause, playButton);
+        mNormalLayout.setImageViewResource(R.id.play_pause, playButton);
+        mExpandedLayout.setImageViewResource(R.id.play_pause, playButton);
+
+        mNormalLayout.setImageViewResource(R.id.play_pause, playButton);
+        mExpandedLayout.setImageViewResource(R.id.play_pause, playButton);
 
         int closeButtonVisibility = View.VISIBLE;
-        views.setViewVisibility(R.id.close, closeButtonVisibility);
-        expanded.setViewVisibility(R.id.close, closeButtonVisibility);
+        mNormalLayout.setViewVisibility(R.id.close, closeButtonVisibility);
+        mExpandedLayout.setViewVisibility(R.id.close, closeButtonVisibility);
+        mNormalLayout.setOnClickPendingIntent(R.id.close, 
+            PendingIntent.getBroadcast(context, 0, mRemoveNotifIntent, PendingIntent.FLAG_UPDATE_CURRENT));
+        mExpandedLayout.setOnClickPendingIntent(R.id.close, 
+            PendingIntent.getBroadcast(context, 0, mRemoveNotifIntent, PendingIntent.FLAG_UPDATE_CURRENT));
 
-        String title = "test-title", artist = "test-artist", album = "test-album";
-        views.setTextViewText(R.id.title, title);
-        views.setTextViewText(R.id.artist, artist);
-        expanded.setTextViewText(R.id.title, title);
-        expanded.setTextViewText(R.id.album, album);
-        expanded.setTextViewText(R.id.artist, artist);
+        String title = mMediaData.getString(MediaMetadataCompat.METADATA_KEY_TITLE);
+        String artist = mMediaData.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
+        String album = mMediaData.getString(MediaMetadataCompat.METADATA_KEY_ALBUM);
+        mNormalLayout.setTextViewText(R.id.title, title);
+        mNormalLayout.setTextViewText(R.id.artist, artist);
+        mExpandedLayout.setTextViewText(R.id.title, title);
+        mExpandedLayout.setTextViewText(R.id.album, album);
+        mExpandedLayout.setTextViewText(R.id.artist, artist);
+
+        if(isPlaying && pause != null) {
+            mNormalLayout.setOnClickPendingIntent(R.id.play_pause, pause.getActionIntent());
+            mExpandedLayout.setOnClickPendingIntent(R.id.play_pause, pause.getActionIntent());            
+        }
+        
+        if(!isPlaying && play != null) {
+            mNormalLayout.setOnClickPendingIntent(R.id.play_pause, play.getActionIntent());
+            mExpandedLayout.setOnClickPendingIntent(R.id.play_pause, play.getActionIntent());      
+        }
+
+        if(skipBackward != null) {
+            mNormalLayout.setOnClickPendingIntent(R.id.previous, skipBackward.getActionIntent());
+            mExpandedLayout.setOnClickPendingIntent(R.id.previous, skipBackward.getActionIntent());  
+        }
+
+        if(skipForward != null) {
+            mNormalLayout.setOnClickPendingIntent(R.id.next, skipForward.getActionIntent());
+            mExpandedLayout.setOnClickPendingIntent(R.id.next, skipForward.getActionIntent());  
+        }
 
         Notification notification = mNotificationHelper.getNewNotification(context);
-        notification.contentView = views;
-        notification.icon = R.drawable.status_icon;
+        notification.contentView = mNormalLayout;
+        notification.icon = (customIcon != 0 ? customIcon : smallIcon);        
         notification.flags |= Notification.FLAG_ONGOING_EVENT;
+        notification.contentIntent = PendingIntent.getActivity(context, 0, mOpenAppIntent, 0);
+        notification.deleteIntent = PendingIntent.getActivity(context, 0, mRemoveNotifIntent, 0);
+
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             // expanded view is available since 4.1
-            notification.bigContentView = expanded;
+            notification.bigContentView = mExpandedLayout;
             // 4.1 also knows about notification priorities
             // HIGH is one higher than the default.
             notification.priority = Notification.PRIORITY_HIGH;
@@ -145,7 +189,9 @@ public class MusicControlNotification {
         return notification;
     }
 
-    public synchronized void show(NotificationCompat.Builder builder, boolean isPlaying) {
+    public synchronized void show(NotificationCompat.Builder builder, MediaMetadataCompat mediaData, boolean isPlaying) {
+        mMediaData = mediaData;
+
         // Add the buttons
         builder.mActions.clear();
         if(previous != null) builder.addAction(previous);
@@ -167,22 +213,26 @@ public class MusicControlNotification {
         
         builder.setSmallIcon(customIcon != 0 ? customIcon : smallIcon);
 
-        // Open the app when the notification is clicked
         String packageName = context.getPackageName();
-        Intent openApp = context.getPackageManager().getLaunchIntentForPackage(packageName);
-        builder.setContentIntent(PendingIntent.getActivity(context, 0, openApp, 0));
+        
+        // Open the app when the notification is clicked
+        mOpenAppIntent = context.getPackageManager().getLaunchIntentForPackage(packageName);
+        builder.setContentIntent(PendingIntent.getActivity(context, 0, mOpenAppIntent, 0));
 
         // Remove notification
-        Intent remove = new Intent(REMOVE_NOTIFICATION);
-        remove.putExtra(PACKAGE_NAME, context.getApplicationInfo().packageName);
-        builder.setDeleteIntent(PendingIntent.getBroadcast(context, 0, remove, PendingIntent.FLAG_UPDATE_CURRENT));
+        mRemoveNotifIntent = new Intent(REMOVE_NOTIFICATION);
+        mRemoveNotifIntent.putExtra(PACKAGE_NAME, context.getApplicationInfo().packageName);
+        builder.setDeleteIntent(PendingIntent.getBroadcast(context, 0, mRemoveNotifIntent, 
+                                PendingIntent.FLAG_UPDATE_CURRENT));
 
         // Finally show/update the notification
-        mNotificationHelper.notify(NOTIFICATION_ID, createNotification(1, VISIBILITY_WHEN_PLAYING));
+        notification = createNotification(isPlaying, VISIBILITY_WHEN_PLAYING);
+        mNotificationHelper.notify(NOTIFICATION_ID, notification);
     }
 
     public void hide() {
         NotificationManagerCompat.from(context).cancel("MusicControl", 0);
+        mNotificationHelper.cancel(NOTIFICATION_ID);      
     }
 
     /**

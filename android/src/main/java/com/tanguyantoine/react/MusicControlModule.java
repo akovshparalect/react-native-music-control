@@ -235,11 +235,10 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
                     }
                     if(nb != null) {
                         nb.setLargeIcon(bitmap);
-                        notification.show(nb, isPlaying);
+                        notification.show(nb, md.build(), isPlaying);
                     }
                     
-                    MusicControlNotification.cover = bitmap;
-                    
+                    notification.setCover(bitmap);
                     artworkThread = null;
                 }
             });
@@ -251,7 +250,7 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
 
         session.setMetadata(md.build());
         session.setActive(true);
-        notification.show(nb, isPlaying);
+        notification.show(nb, md.build(), isPlaying);
     }
 
     @ReactMethod
@@ -280,8 +279,8 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
         pb.setActions(controls);
 
         isPlaying = pbState == PlaybackStateCompat.STATE_PLAYING || pbState == PlaybackStateCompat.STATE_BUFFERING;
-        if(session.isActive()) notification.show(nb, isPlaying);
-
+        if(session.isActive()) notification.show(nb, md.build(), isPlaying);
+        
         state = pb.build();
         session.setPlaybackState(state);
 
