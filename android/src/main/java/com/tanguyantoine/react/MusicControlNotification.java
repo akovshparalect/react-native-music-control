@@ -9,16 +9,27 @@ import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.NotificationCompat;
 import android.view.KeyEvent;
+import android.widget.RemoteViews;
+import android.app.Notification;
+import android.view.View;
+import android.os.Build;
+
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableMap;
 
 import java.util.Map;
 
 public class MusicControlNotification {
+    
+    public static final int VISIBILITY_WHEN_PLAYING = 0;
+    public static final int VISIBILITY_ALWAYS = 1;
 
     protected static final String REMOVE_NOTIFICATION = "music_control_remove_notification";
     protected static final String MEDIA_BUTTON = "music_control_media_button";
     protected static final String PACKAGE_NAME = "music_control_package_name";
+
+    private static final String NOTIFICATION_CHANNEL = "Playback";
+    private static final int NOTIFICATION_ID = 2;
 
     private final ReactApplicationContext context;
     private final MusicControlModule module;
@@ -26,7 +37,9 @@ public class MusicControlNotification {
     private int smallIcon;
     private int customIcon;
     private NotificationCompat.Action play, pause, stop, next, previous, skipForward, skipBackward;
-
+    private boolean mNotificationNag = false; // todo
+    private NotificationHelper mNotificationHelper;
+    
     public MusicControlNotification(MusicControlModule module, ReactApplicationContext context) {
         this.context = context;
         this.module = module;
@@ -37,6 +50,8 @@ public class MusicControlNotification {
         // Optional custom icon with fallback to the play icon
         smallIcon = r.getIdentifier("music_control_icon", "drawable", packageName);
         if(smallIcon == 0) smallIcon = r.getIdentifier("play", "drawable", packageName);
+
+        mNotificationHelper = new NotificationHelper(context, NOTIFICATION_CHANNEL, "Podcast App");  // todo
     }
     
     public synchronized void setCustomNotificationIcon(String resourceName) {
@@ -67,8 +82,57 @@ public class MusicControlNotification {
         if (options != null && options.containsKey("skipBackward") && (options.get("skipBackward") == 10 || options.get("skipBackward") == 5 || options.get("skipBackward") == 30)) {
             skipBackward = createAction("skip_backward_" + options.get("skipBackward").toString(), "Skip Backward", mask, PlaybackStateCompat.ACTION_REWIND, skipBackward);
         } else {
-            skipBackward = createAction("skip_backward_", "Skip Backward", mask, PlaybackStateCompat.ACTION_REWIND, skipBackward);
+            skipBackward = createAction("skip_backward_10", "Skip Backward", mask, PlaybackStateCompat.ACTION_REWIND, skipBackward);
         }
+    }
+
+    public Notification createNotification(int state, int mode)
+    {
+        boolean playing = true;
+
+        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.notification);
+        RemoteViews expanded = new RemoteViews(context.getPackageName(), R.layout.notification_expanded);
+
+        int playButton = ThemeHelper.getPlayButtonResource(playing);
+
+        views.setImageViewResource(R.id.play_pause, playButton);
+        expanded.setImageViewResource(R.id.play_pause, playButton);
+
+        int closeButtonVisibility = (mode == VISIBILITY_WHEN_PLAYING) ? View.VISIBLE : View.INVISIBLE;
+        views.setViewVisibility(R.id.close, closeButtonVisibility);
+        expanded.setViewVisibility(R.id.close, closeButtonVisibility);
+
+        String title = "test-title", artist = "test-artist", album = "test-album";
+        views.setTextViewText(R.id.title, title);
+        views.setTextViewText(R.id.artist, artist);
+        expanded.setTextViewText(R.id.title, title);
+        expanded.setTextViewText(R.id.album, album);
+        expanded.setTextViewText(R.id.artist, artist);
+
+        Notification notification = mNotificationHelper.getNewNotification(context);
+        notification.contentView = views;
+        notification.icon = R.drawable.status_icon;
+        notification.flags |= Notification.FLAG_ONGOING_EVENT;
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            // expanded view is available since 4.1
+            notification.bigContentView = expanded;
+            // 4.1 also knows about notification priorities
+            // HIGH is one higher than the default.
+            notification.priority = Notification.PRIORITY_HIGH;
+        }
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            notification.visibility = Notification.VISIBILITY_PUBLIC;
+        }
+        if(mNotificationNag) {
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                notification.priority = Notification.PRIORITY_MAX;
+                notification.vibrate = new long[0]; // needed to get headsup
+            } else {
+                notification.tickerText = title + " - " + artist;
+            }
+        }
+
+        return notification;
     }
 
     public synchronized void show(NotificationCompat.Builder builder, boolean isPlaying) {
@@ -105,6 +169,8 @@ public class MusicControlNotification {
 
         // Finally show/update the notification
         NotificationManagerCompat.from(context).notify("MusicControl", 0, builder.build());
+
+        mNotificationHelper.notify(NOTIFICATION_ID, createNotification(1, VISIBILITY_WHEN_PLAYING));
     }
 
     public void hide() {
