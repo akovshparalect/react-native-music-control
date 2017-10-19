@@ -200,8 +200,6 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
             rating = RatingCompat.newUnratedRating(ratingType);
         }
 
-
-
         md.putText(MediaMetadataCompat.METADATA_KEY_TITLE, title);
         md.putText(MediaMetadataCompat.METADATA_KEY_ARTIST, artist);
         md.putText(MediaMetadataCompat.METADATA_KEY_ALBUM, album);
@@ -287,9 +285,12 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
         pb.setBufferedPosition(bufferedTime);
         pb.setActions(controls);
 
-        isPlaying = pbState == PlaybackStateCompat.STATE_PLAYING || pbState == PlaybackStateCompat.STATE_BUFFERING;
-        if(session.isActive()) notification.show(nb, md.build(), isPlaying);
-        
+        isPlaying = (pbState == PlaybackStateCompat.STATE_PLAYING || 
+                     pbState == PlaybackStateCompat.STATE_BUFFERING);
+        notification.setCustomNotificationIcon(isPlaying ? "play" : "pause");
+        if(session.isActive()) 
+            notification.show(nb, md.build(), isPlaying);
+
         state = pb.build();
         session.setPlaybackState(state);
 
