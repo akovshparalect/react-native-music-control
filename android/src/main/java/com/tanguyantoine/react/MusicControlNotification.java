@@ -139,12 +139,14 @@ public class MusicControlNotification {
         String title = mMediaData.getString(MediaMetadataCompat.METADATA_KEY_TITLE);
         String artist = mMediaData.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
         String album = mMediaData.getString(MediaMetadataCompat.METADATA_KEY_ALBUM);
+        String timeString = getTimeString();
+        
         mNormalLayout.setTextViewText(R.id.title, title);
-        mNormalLayout.setTextViewText(R.id.artist, artist);
+        mNormalLayout.setTextViewText(R.id.artist, artist + timeString);
         mExpandedLayout.setTextViewText(R.id.title, title);
+        mExpandedLayout.setTextViewText(R.id.artist, artist + timeString);
         mExpandedLayout.setTextViewText(R.id.album, album);
-        mExpandedLayout.setTextViewText(R.id.artist, artist);
-
+        
         if(isPlaying && pause != null) {
             mNormalLayout.setOnClickPendingIntent(R.id.play_pause, pause.getActionIntent());
             mExpandedLayout.setOnClickPendingIntent(R.id.play_pause, pause.getActionIntent());            
@@ -282,6 +284,26 @@ public class MusicControlNotification {
         PendingIntent i = PendingIntent.getBroadcast(context, keyCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         return new NotificationCompat.Action(icon, title, i);
+    }
+
+    private String getTimeString() {
+        long duration = mMediaData.getLong(MediaMetadataCompat.METADATA_KEY_DURATION);
+        if(duration == 0L) 
+            return new String("");
+
+        String timeString = "";
+        long durationInSecs = duration / 1000;
+        long hours = durationInSecs / 3600;
+        long minutes = (durationInSecs % 3600) / 60;
+        long seconds = durationInSecs % 60;
+
+        String BULLET_UNICODE = " \u2022 ";
+        if (hours > 0)
+            timeString = BULLET_UNICODE + String.format("%02d:%02d:%02d", hours, minutes, seconds);
+        else
+            timeString = BULLET_UNICODE + String.format("%02d:%02d", minutes, seconds);
+
+        return timeString;
     }
 
     public static class NotificationService extends Service {
