@@ -50,7 +50,10 @@ THE SOFTWARE.
 			android:layout_height="wrap_content"
 			android:textAppearance="@android:style/TextAppearance.StatusBar.EventContent.Title"
 			android:singleLine="true"
-			android:ellipsize="marquee" />
+			android:ellipsize="marquee" 
+			android:marqueeRepeatLimit="marquee_forever"
+			android:focusable="true"
+			android:focusableInTouchMode="true"/>
 		<TextView
 			android:id="@+id/artist"
 			android:layout_width="fill_parent"
