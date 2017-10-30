@@ -224,6 +224,7 @@ public class MusicControlNotification {
         
         // Open the app when the notification is clicked
         mOpenAppIntent = context.getPackageManager().getLaunchIntentForPackage(packageName);
+        mOpenAppIntent.setAction("android.intent.action.fcm_jump_to_playback");
         builder.setContentIntent(PendingIntent.getActivity(context, 0, mOpenAppIntent, 0));
 
         // Remove notification
