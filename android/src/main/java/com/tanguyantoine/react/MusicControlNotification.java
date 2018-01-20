@@ -40,7 +40,11 @@ public class MusicControlNotification {
     private int smallIcon;
     private int customIcon;
     private NotificationCompat.Action play, pause, stop, next, previous, skipForward, skipBackward;
-    private boolean mNotificationNag = false; // todo
+
+    // If true, create a notification with ticker text or heads up display	 
+    // Todo: Currently not effective, functionality to be implemented
+    private boolean mNotificationNag = false;
+
     private NotificationHelper mNotificationHelper;
     private Bitmap mCover = null;
     private Intent mOpenAppIntent;
@@ -61,7 +65,11 @@ public class MusicControlNotification {
         smallIcon = r.getIdentifier("music_control_icon", "drawable", packageName);
         if(smallIcon == 0) smallIcon = r.getIdentifier("play", "drawable", packageName);
 
-        mNotificationHelper = new NotificationHelper(context, NOTIFICATION_CHANNEL, "Podcast App");  // todo
+        mNotificationHelper = new NotificationHelper(context, NOTIFICATION_CHANNEL, "Music Control");
+        mOpenAppIntent = context.getPackageManager().getLaunchIntentForPackage(packageName);
+        mOpenAppIntent.setAction("android.intent.action.fcm_jump_to_playback");
+        mRemoveNotifIntent = new Intent(REMOVE_NOTIFICATION);
+        mRemoveNotifIntent.putExtra(PACKAGE_NAME, context.getApplicationInfo().packageName);
         mNormalLayout = new RemoteViews(context.getPackageName(), R.layout.notification);
         mExpandedLayout = new RemoteViews(context.getPackageName(), R.layout.notification_expanded);
     }
@@ -120,15 +128,11 @@ public class MusicControlNotification {
             mExpandedLayout.setImageViewBitmap(R.id.cover, mCover);
         }
 
-        int playButton = ThemeHelper.getPlayButtonResource(isPlaying);
-
+        final int playButton = ThemeHelper.getPlayButtonResource(isPlaying);
         mNormalLayout.setImageViewResource(R.id.play_pause, playButton);
         mExpandedLayout.setImageViewResource(R.id.play_pause, playButton);
 
-        mNormalLayout.setImageViewResource(R.id.play_pause, playButton);
-        mExpandedLayout.setImageViewResource(R.id.play_pause, playButton);
-
-        int closeButtonVisibility = View.VISIBLE;
+        final int closeButtonVisibility = View.VISIBLE;
         mNormalLayout.setViewVisibility(R.id.close, closeButtonVisibility);
         mExpandedLayout.setViewVisibility(R.id.close, closeButtonVisibility);
         mNormalLayout.setOnClickPendingIntent(R.id.close, 
@@ -136,10 +140,10 @@ public class MusicControlNotification {
         mExpandedLayout.setOnClickPendingIntent(R.id.close, 
             PendingIntent.getBroadcast(context, 0, mRemoveNotifIntent, PendingIntent.FLAG_UPDATE_CURRENT));
 
-        String title = mMediaData.getString(MediaMetadataCompat.METADATA_KEY_TITLE);
-        String artist = mMediaData.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
-        String album = mMediaData.getString(MediaMetadataCompat.METADATA_KEY_ALBUM);
-        String timeString = getTimeString();
+        final String title = mMediaData.getString(MediaMetadataCompat.METADATA_KEY_TITLE);
+        final String artist = mMediaData.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
+        final String album = mMediaData.getString(MediaMetadataCompat.METADATA_KEY_ALBUM);
+        final String timeString = getTimeString();
         
         mNormalLayout.setTextViewText(R.id.title, title);
         mNormalLayout.setTextViewText(R.id.artist, artist + timeString);
@@ -196,7 +200,8 @@ public class MusicControlNotification {
         return notification;
     }
 
-    public synchronized void show(NotificationCompat.Builder builder, MediaMetadataCompat mediaData, boolean isPlaying) {
+    public synchronized void show(NotificationCompat.Builder builder, MediaMetadataCompat mediaData, 
+                                  boolean isPlaying) {
         mMediaData = mediaData;
 
         // Add the buttons
@@ -219,17 +224,11 @@ public class MusicControlNotification {
         }
         
         builder.setSmallIcon(customIcon != 0 ? customIcon : smallIcon);
-
-        String packageName = context.getPackageName();
         
         // Open the app when the notification is clicked
-        mOpenAppIntent = context.getPackageManager().getLaunchIntentForPackage(packageName);
-        mOpenAppIntent.setAction("android.intent.action.fcm_jump_to_playback");
         builder.setContentIntent(PendingIntent.getActivity(context, 0, mOpenAppIntent, 0));
 
         // Remove notification
-        mRemoveNotifIntent = new Intent(REMOVE_NOTIFICATION);
-        mRemoveNotifIntent.putExtra(PACKAGE_NAME, context.getApplicationInfo().packageName);
         builder.setDeleteIntent(PendingIntent.getBroadcast(context, 0, mRemoveNotifIntent, 
                                 PendingIntent.FLAG_UPDATE_CURRENT));
 
@@ -288,17 +287,17 @@ public class MusicControlNotification {
     }
 
     private String getTimeString() {
-        long duration = mMediaData.getLong(MediaMetadataCompat.METADATA_KEY_DURATION);
+        final long duration = mMediaData.getLong(MediaMetadataCompat.METADATA_KEY_DURATION);
         if(duration == 0L) 
             return new String("");
 
         String timeString = "";
-        long durationInSecs = duration / 1000;
-        long hours = durationInSecs / 3600;
-        long minutes = (durationInSecs % 3600) / 60;
-        long seconds = durationInSecs % 60;
+        final long durationInSecs = duration / 1000;
+        final long hours = durationInSecs / 3600;
+        final long minutes = (durationInSecs % 3600) / 60;
+        final long seconds = durationInSecs % 60;
 
-        String BULLET_UNICODE = " \u2022 ";
+        final String BULLET_UNICODE = " \u2022 ";
         if (hours > 0)
             timeString = BULLET_UNICODE + String.format("%02d:%02d:%02d", hours, minutes, seconds);
         else

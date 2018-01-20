@@ -41,11 +41,14 @@ public class NotificationHelper {
 	 * @param name the user visible name of the channel.
 	 */
 	public NotificationHelper(Context context, String channelId, String name) {
-		mNotificationManager = (NotificationManager)context.getSystemService(context.NOTIFICATION_SERVICE);
+		mNotificationManager = 
+			(NotificationManager)context.getSystemService(context.NOTIFICATION_SERVICE);
+
 		mChannelId = channelId;
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			NotificationChannel channel = new NotificationChannel(channelId, name, NotificationManager.IMPORTANCE_LOW);
+			NotificationChannel channel = 
+				new NotificationChannel(channelId, name, NotificationManager.IMPORTANCE_LOW);
 			mNotificationManager.createNotificationChannel(channel);
 		}
 	}
@@ -57,11 +60,11 @@ public class NotificationHelper {
 	 */
 	public Notification.Builder getNewBuilder(Context context) {
 		Notification.Builder builder;
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) 
 			builder = new Notification.Builder(context, mChannelId);
-		} else {
+		else 
 			builder = new Notification.Builder(context);
-		}
+		
 		return builder;
 	}
 
