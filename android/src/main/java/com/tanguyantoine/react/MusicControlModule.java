@@ -240,12 +240,15 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
                         md.putBitmap(MediaMetadataCompat.METADATA_KEY_ART, bitmap);
                         session.setMetadata(md.build());
                     }
+                    
                     if(nb != null) {
                         nb.setLargeIcon(bitmap);
                         notification.show(nb, md.build(), isPlaying);
                     }
                     
-                    notification.setCover(bitmap);
+                    if(bitmap != null)                    
+                        notification.setCover(bitmap);
+
                     artworkThread = null;
                 }
             });
