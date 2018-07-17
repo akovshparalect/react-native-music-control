@@ -314,6 +314,7 @@ public class MusicControlNotification {
 
         @Override
         public int onStartCommand(Intent intent, int flags, int startId) {
+            startForeground(1,new Notification());
             return START_NOT_STICKY;
         }
 
