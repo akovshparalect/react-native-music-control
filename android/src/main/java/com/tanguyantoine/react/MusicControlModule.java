@@ -187,7 +187,6 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
         String date = metadata.hasKey("date") ? metadata.getString("date") : null;
         long duration = metadata.hasKey("duration") ? (long)(metadata.getDouble("duration") * 1000) : 0;
         int notificationColor = metadata.hasKey("color") ? metadata.getInt("color") : NotificationCompat.COLOR_DEFAULT;
-        String notificationIcon = metadata.hasKey("notificationIcon") ? metadata.getString("notificationIcon") : null;
 
         RatingCompat rating;
         if(metadata.hasKey("rating")) {
@@ -218,8 +217,8 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
         nb.setContentInfo(album);
         nb.setColor(notificationColor);
         nb.setStyle(new NotificationCompat.MediaStyle().setShowActionsInCompactView(0,1,2));
-        
-        notification.setCustomNotificationIcon(notificationIcon);
+
+        notification.setCustomNotificationIcon("ic_stat_onesignal_default");
 
         if(metadata.hasKey("artwork")) {
             String artwork = null;
